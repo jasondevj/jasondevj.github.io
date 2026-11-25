@@ -7,7 +7,7 @@ import { SITE } from '../../site.config';
 
 const network = buildStops(await getPosts());
 const lines = activeLines(network);
-const description = `Everything ${SITE.name} has written about AI engineering, systems and the people who build software, newest first.`;
+const description = `Everything ${SITE.name} has written about technology and engineering, newest first.`;
 ---
 
 <Base
@@ -31,8 +31,7 @@ const description = `Everything ${SITE.name} has written about AI engineering, s
 	<section class="shell page-head">
 		<h1>Writing</h1>
 		<p class="lede">
-			{`${network.length} ${network.length === 1 ? 'piece' : 'pieces'}`} on AI engineering, systems and the people who build
-			software, newest first. Pick a topic or search to narrow it down.
+			{`${network.length} ${network.length === 1 ? 'piece' : 'pieces'}`} on technology and engineering, newest first. Pick a topic or search to narrow it down.
 		</p>
 	</section>
 	<div class="shell">

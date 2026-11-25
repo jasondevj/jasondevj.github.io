@@ -9,7 +9,7 @@ const dateLabel = (date: Date) =>
 export const getStaticPaths = (async () => {
 	const network = buildStops(await getPosts());
 	const site: OgCard = {
-		title: 'I write about AI engineering, the systems underneath it, and the people who build both.',
+		title: 'I write about technology and the things I build\u00a0with\u00a0it.',
 		stations: LINES.filter(({ id }) => id !== 'nt').map(({ id, code, name }) => ({ lineId: id, code, name })),
 		footer: 'jasondevj.com',
 	};

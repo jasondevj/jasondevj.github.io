@@ -19,10 +19,11 @@ const featuredProjects = (await getProjects()).filter(({ data }) => data.feature
 <Base jsonLd={[websiteSchema(), personSchema()]}>
 	<section class="shell hero band">
 		<div class="intro">
-			<h1>I write about AI engineering, the systems underneath it, and the people who build both.</h1>
+			<h1>I write about technology and the things I build with it.</h1>
 			<p class="lede">
-				I'm Jason, a {SITE.role.toLowerCase()} in {SITE.location}. I've spent years on high-throughput Java
-				systems, and these days most of my work is AI agents, RAG pipelines and the guardrails around them.
+				I'm Jason, a {SITE.role.toLowerCase()} in {SITE.location}. I've worked across telco, banking and healthcare, on
+				everything from low-level programming to large systems and AI. This is where I write about whatever I'm working on
+				or learning.
 			</p>
 			<LineLegend lines={lines} counts={counts} />
 		</div>
@@ -71,9 +72,10 @@ const featuredProjects = (await getProjects()).filter(({ data }) => data.feature
 	}
 
 	h1 {
-		font-size: clamp(2.6rem, 1.5rem + 3.3vw, 4.35rem);
+		max-width: 18ch;
+		font-size: clamp(2.1rem, 1.5rem + 1.9vw, 3rem);
 		font-weight: 800;
-		line-height: 1;
+		line-height: 1.05;
 		letter-spacing: -0.03em;
 	}
 

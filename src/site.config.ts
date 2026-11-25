@@ -4,7 +4,7 @@ export const SITE = {
 	shortName: 'Jason',
 	title: 'Jason Jebanesan — Technology Architect & Writer',
 	description:
-		'Jason Jebanesan is a Singapore-based technology architect writing about AI engineering, agents, system design, Java and the human side of building software.',
+		'Jason Jebanesan is a technology architect in Singapore, writing about technology and engineering, from low-level programming to large systems and AI.',
 	role: 'Technology Architect',
 	sectors: ['Telco', 'Banking', 'Healthcare'],
 	location: 'Singapore',
@@ -16,6 +16,7 @@ export const SITE = {
 		'Jason Jebanesan',
 		'software engineering',
 		'software architecture',
+		'low-level programming',
 		'AI engineering',
 		'AI agents',
 		'system design',

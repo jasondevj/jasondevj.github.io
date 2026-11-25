@@ -17,7 +17,7 @@ export function personSchema() {
 		image: absolute('/og/site.png'),
 		jobTitle: SITE.role,
 		address: { '@type': 'PostalAddress', addressLocality: SITE.location },
-		knowsAbout: ['Software engineering', 'Software architecture', 'AI engineering', 'AI agents', 'System design', 'Java', 'Distributed systems'],
+		knowsAbout: ['Software engineering', 'Software architecture', 'Low-level programming', 'AI engineering', 'AI agents', 'System design', 'Java', 'Distributed systems'],
 		sameAs: sameAsProfiles,
 	};
 }
