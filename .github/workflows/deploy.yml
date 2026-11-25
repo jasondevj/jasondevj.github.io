@@ -1,0 +1,96 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: Post slug to cross-post to LinkedIn/Medium after deploying (leave empty to only deploy)
+        required: false
+        default: ''
+      only:
+        description: Where to cross-post
+        type: choice
+        options:
+          - linkedin,medium
+          - linkedin
+          - medium
+        default: linkedin,medium
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: site
+          path: dist
+          retention-days: 3
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
+
+  syndicate:
+    needs: deploy
+    if: github.event_name == 'push' || inputs.slug != ''
+    runs-on: ubuntu-latest
+    environment: syndication
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v8
+        with:
+          name: site
+          path: dist
+      - name: Cross-post new posts
+        env:
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_AUTHOR_URN: ${{ secrets.LINKEDIN_AUTHOR_URN }}
+          LINKEDIN_API_VERSION: ${{ vars.LINKEDIN_API_VERSION }}
+          MEDIUM_TOKEN: ${{ secrets.MEDIUM_TOKEN }}
+          MEDIUM_PUBLISH_STATUS: ${{ vars.MEDIUM_PUBLISH_STATUS }}
+          SYNDICATE_DRY_RUN: ${{ vars.SYNDICATE_DRY_RUN }}
+          SLUG: ${{ inputs.slug }}
+          ONLY: ${{ inputs.only || 'linkedin,medium' }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ -n "$SLUG" ]; then
+            node scripts/syndicate.mjs --slug "$SLUG" --only "$ONLY"
+          else
+            node scripts/syndicate.mjs --since "$BEFORE" --only "$ONLY"
+          fi

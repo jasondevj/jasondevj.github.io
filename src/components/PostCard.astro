@@ -1,0 +1,196 @@
+---
+import { hasFullText, postUrl, readingMinutes, type Stop } from '../lib/posts';
+import FormattedDate from './FormattedDate.astro';
+
+interface Props {
+	stop: Stop;
+	variant?: 'compact' | 'tile' | 'full';
+}
+
+const { stop, variant = 'compact' } = Astro.props;
+const { post, stations } = stop;
+const primaryLine = stations[0]?.line.id ?? 'nt';
+const full = variant === 'full';
+const withSummary = variant !== 'compact';
+---
+
+<a class={`post-card ${variant} line-${primaryLine}`} href={postUrl(post)}>
+	{
+		full && (
+			<span class="rails" aria-hidden="true">
+				{stations.map(({ line }) => (
+					<span class={`line-${line.id}`} />
+				))}
+			</span>
+		)
+	}
+	<span class="inner">
+		<span class="top">
+			<span class="codes">
+				{stations.map(({ line, code }) => <span class={`line-badge line-${line.id}`}>{code}</span>)}
+			</span>
+			<FormattedDate date={post.data.pubDate} />
+		</span>
+		<span class="title">{post.data.title}</span>
+		{withSummary && <span class="summary">{post.data.description}</span>}
+		{!full && post.data.draft && <span class="draft">Draft, only visible locally</span>}
+		{
+			full && (
+				<span class="meta">
+					{hasFullText(post) ? `${readingMinutes(post)} min read` : `First published on ${post.data.originalSource ?? 'another site'}`}
+					{post.data.draft && <span class="draft">Draft, only visible locally</span>}
+				</span>
+			)
+		}
+	</span>
+</a>
+
+<style>
+	.post-card {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		overflow: hidden;
+		border: 1px solid var(--rule);
+		border-radius: var(--radius-m);
+		background: var(--white);
+		transition: border-color 0.2s var(--ease);
+	}
+
+	.post-card:hover {
+		border-color: var(--c);
+	}
+
+	.compact,
+	.tile {
+		border-left: 4px solid var(--c);
+	}
+
+	.tile .inner {
+		gap: 0.45rem;
+		padding: 0.9rem 1.1rem 1rem;
+	}
+
+	.tile .summary {
+		flex: none;
+		max-height: 3em;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
+		font-size: var(--t-small);
+		line-height: 1.5;
+	}
+
+	.tile .draft {
+		align-self: flex-start;
+		font-size: var(--t-small);
+	}
+
+	.full {
+		border-radius: var(--radius-l);
+	}
+
+	.rails {
+		display: flex;
+		gap: 3px;
+		height: 6px;
+	}
+
+	.rails span {
+		flex: 1;
+		background: var(--c);
+	}
+
+	.inner {
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		gap: 0.5rem;
+		padding: 0.8rem 1rem 0.9rem;
+	}
+
+	.full .inner {
+		gap: 0.6rem;
+		padding: 1.1rem 1.3rem 1.2rem;
+	}
+
+	.top {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+		font-size: var(--t-small);
+		color: var(--quiet);
+	}
+
+	.codes {
+		display: flex;
+		gap: 0.3rem;
+	}
+
+	.compact .codes :global(.line-badge),
+	.tile .codes :global(.line-badge) {
+		height: 1.35rem;
+		min-width: 2.1rem;
+		font-size: 0.75rem;
+	}
+
+	.title {
+		display: -webkit-box;
+		overflow: hidden;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
+		font-family: var(--font-display);
+		font-size: 1.02rem;
+		font-weight: 700;
+		line-height: 1.25;
+		letter-spacing: -0.015em;
+		transition: color 0.2s var(--ease);
+	}
+
+	.full .title {
+		-webkit-line-clamp: 3;
+		line-clamp: 3;
+		font-size: clamp(1.2rem, 1.05rem + 0.5vw, 1.4rem);
+		font-weight: 750;
+		line-height: 1.18;
+		letter-spacing: -0.02em;
+	}
+
+	.post-card:hover .title {
+		color: var(--cink);
+	}
+
+	.summary {
+		display: -webkit-box;
+		flex: 1;
+		overflow: hidden;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 3;
+		line-clamp: 3;
+		font-size: var(--t-ui);
+		line-height: 1.55;
+		color: var(--body);
+	}
+
+	.meta {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.4rem 0.75rem;
+		padding-top: 0.75rem;
+		border-top: 1px solid var(--rule);
+		font-size: var(--t-small);
+		font-weight: 600;
+		color: var(--quiet);
+	}
+
+	.draft {
+		align-self: flex-start;
+		padding: 0.1rem 0.55rem;
+		border-radius: 999px;
+		background: #fff3d9;
+		color: #8f5c00;
+		font-size: var(--t-small);
+	}
+</style>

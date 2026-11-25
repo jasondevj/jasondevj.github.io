@@ -1,0 +1,132 @@
+---
+import { activeYears, type Project } from '../lib/projects';
+import Icon from './Icon.astro';
+
+interface Props {
+	projects: Project[];
+}
+
+const { projects } = Astro.props;
+---
+
+<ul class="projects">
+	{
+		projects.map((project) => (
+			<li>
+				<a class="card" href={`/projects/${project.id}/`}>
+					<span class="top">
+						<span class="language">{project.data.language}</span>
+						<span class="year">{activeYears(project)}</span>
+					</span>
+					<span class="name">{project.data.name}</span>
+					<span class="description">{project.data.summary}</span>
+					<span class="bottom">
+						<span class="stars">
+							{project.data.role === 'contributor' ? (
+								'Contributor'
+							) : project.data.stars > 0 ? (
+								<>
+									<Icon name="star" class="icon" /> {project.data.stars}
+								</>
+							) : (
+								'Author'
+							)}
+						</span>
+						<span class="open">
+							View project <Icon name="arrow-right" class="icon" />
+						</span>
+					</span>
+				</a>
+			</li>
+		))
+	}
+</ul>
+
+<style>
+	.projects {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+		gap: 1rem;
+	}
+
+	.card {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		padding: 1.15rem 1.3rem;
+		border: 1px solid var(--rule);
+		border-radius: var(--radius-l);
+		background: var(--white);
+		transition: border-color 0.2s var(--ease);
+	}
+
+	.card:hover {
+		border-color: var(--line-sa);
+	}
+
+	.top {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	.language {
+		padding: 0.25rem 0.7rem;
+		border-radius: 999px;
+		background: var(--band);
+		color: var(--link);
+		font-size: var(--t-small);
+		font-weight: 700;
+	}
+
+	.year {
+		font-size: var(--t-small);
+		color: var(--quiet);
+	}
+
+	.name {
+		margin-top: 0.9rem;
+		font-family: var(--font-display);
+		font-size: 1.25rem;
+		font-weight: 750;
+		line-height: 1.15;
+		letter-spacing: -0.025em;
+		overflow-wrap: anywhere;
+	}
+
+	.description {
+		flex: 1;
+		margin-top: 0.4rem;
+		font-size: var(--t-ui);
+		line-height: 1.55;
+		color: var(--body);
+	}
+
+	.bottom {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-top: 0.9rem;
+		padding-top: 0.75rem;
+		border-top: 1px solid var(--rule);
+		font-size: var(--t-ui);
+		font-weight: 600;
+		color: var(--quiet);
+	}
+
+	.stars,
+	.open {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+	}
+
+	.bottom :global(.icon) {
+		width: 0.95rem;
+		height: 0.95rem;
+	}
+
+	.card:hover .open {
+		color: var(--link);
+	}
+</style>

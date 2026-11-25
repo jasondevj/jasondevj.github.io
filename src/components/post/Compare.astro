@@ -1,0 +1,92 @@
+---
+interface Side {
+	title: string;
+	body: string;
+	verdict: string;
+}
+
+interface Props {
+	before: Side;
+	after: Side;
+}
+
+const { before, after } = Astro.props;
+---
+
+<div class="compare">
+	<figure class="side before">
+		<p class="label">{before.title}</p>
+		<p class="body">{before.body}</p>
+		<p class="verdict">{before.verdict}</p>
+	</figure>
+	<figure class="side after">
+		<p class="label">{after.title}</p>
+		<p class="body">{after.body}</p>
+		<p class="verdict">{after.verdict}</p>
+	</figure>
+</div>
+
+<style>
+	.compare {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 0.75rem;
+		font-family: var(--font-sans);
+	}
+
+	.side {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		margin: 0;
+		padding: 1.1rem 1.2rem;
+		border-radius: var(--radius-l);
+	}
+
+	.side p {
+		margin: 0;
+	}
+
+	.before {
+		background: var(--paper);
+		box-shadow: inset 0 0 0 1px var(--rule-strong);
+	}
+
+	.after {
+		background: var(--tint);
+	}
+
+	.label {
+		font-family: var(--font-display);
+		font-size: 1.1rem;
+		font-weight: 750;
+		letter-spacing: -0.015em;
+		color: var(--ink);
+	}
+
+	.body {
+		flex: 1;
+		font-size: var(--t-ui);
+		line-height: 1.6;
+		color: var(--body);
+	}
+
+	.verdict {
+		padding-top: 0.6rem;
+		border-top: 1px solid var(--rule-strong);
+		font-size: var(--t-small);
+		font-weight: 700;
+		color: var(--quiet);
+	}
+
+	.after .verdict {
+		border-top-color: color-mix(in oklab, var(--c) 35%, transparent);
+		color: var(--cink);
+	}
+
+	@media (max-width: 560px) {
+		.compare {
+			grid-template-columns: 1fr;
+		}
+	}
+</style>

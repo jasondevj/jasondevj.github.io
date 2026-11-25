@@ -1,0 +1,75 @@
+---
+import type { Line } from '../data/lines';
+
+interface Props {
+	lines: Line[];
+	counts: Map<string, number>;
+}
+
+const { lines, counts } = Astro.props;
+---
+
+<ul class="chips" aria-label="Browse by topic">
+	{
+		lines.map((line) => {
+			const count = counts.get(line.id) ?? 0;
+			return (
+				<li>
+					<a class={`chip line-${line.id}`} href={`/lines/${line.id}/`} title={line.summary}>
+						<span class="dot" aria-hidden="true" />
+						{line.name}
+						<span class="count">
+							{count}
+							<span class="sr-only">{count === 1 ? 'post' : 'posts'}</span>
+						</span>
+					</a>
+				</li>
+			);
+		})
+	}
+</ul>
+
+<style>
+	.chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.6rem;
+	}
+
+	.chip {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.6rem;
+		height: 2.75rem;
+		padding-inline: 0.9rem 0.45rem;
+		border-radius: 999px;
+		background: var(--tint);
+		color: var(--cink);
+		font-weight: 600;
+		transition: background-color 0.2s var(--ease);
+	}
+
+	.chip:hover {
+		background: color-mix(in oklab, var(--tint) 75%, var(--c));
+	}
+
+	.dot {
+		width: 0.8rem;
+		height: 0.8rem;
+		border-radius: 50%;
+		background: var(--white);
+		box-shadow: inset 0 0 0 3.5px var(--c);
+	}
+
+	.count {
+		display: grid;
+		place-items: center;
+		min-width: 1.9rem;
+		height: 1.9rem;
+		padding-inline: 0.4rem;
+		border-radius: 999px;
+		background: var(--white);
+		font-size: var(--t-small);
+		font-weight: 700;
+	}
+</style>

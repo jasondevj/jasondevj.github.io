@@ -1,0 +1,373 @@
+---
+import type { ImageMetadata } from 'astro';
+import { getImage, Image } from 'astro:assets';
+import { videoObjectSchema } from '../../lib/schema';
+import Icon from '../Icon.astro';
+import LinkedInMark from '../LinkedInMark.astro';
+import YouTubeMark from '../YouTubeMark.astro';
+
+interface Video {
+	youtubeId: string;
+	uploaded: string;
+	seconds: number;
+	description: string;
+}
+
+interface Props {
+	title: string;
+	kind?: string;
+	event: string;
+	host?: string;
+	date: string;
+	cover: ImageMetadata;
+	slidesHref?: string;
+	video?: Video;
+	recapHref?: string;
+}
+
+const { title, kind = 'I gave this as a talk', event, host, date, cover, slidesHref, video, recapHref } = Astro.props;
+
+const watchUrl = video && `https://www.youtube.com/watch?v=${video.youtubeId}`;
+const runningTime = video && `${Math.floor(video.seconds / 60)}:${String(video.seconds % 60).padStart(2, '0')}`;
+const videoSchema =
+	video &&
+	videoObjectSchema({
+		name: title,
+		description: video.description,
+		youtubeId: video.youtubeId,
+		uploaded: video.uploaded,
+		seconds: video.seconds,
+		thumbnailPath: (await getImage({ src: cover, width: 1280, format: 'jpeg' })).src,
+	});
+---
+
+<aside class:list={['talk', { 'has-video': video }]} aria-label="The talk behind this post">
+	{
+		video ? (
+			<div class="player" data-youtube-id={video.youtubeId} data-title={title}>
+				<a class="cover" href={watchUrl} aria-label={`Play the video: ${title}`}>
+					<Image src={cover} alt="" widths={[480, 800, 1280]} sizes="(max-width: 1080px) 100vw, 50rem" />
+					<span class="play" aria-hidden="true">
+						<svg viewBox="0 0 24 24">
+							<path d="M8 5.6v12.8a.6.6 0 0 0 .92.5l10.1-6.4a.6.6 0 0 0 0-1L8.92 5.1a.6.6 0 0 0-.92.5Z" />
+						</svg>
+					</span>
+					<span class="runtime">{runningTime}</span>
+				</a>
+			</div>
+		) : (
+			<a class="cover" href={slidesHref} aria-label={`Open the slides for ${title}`}>
+				<Image src={cover} alt="" widths={[400, 800]} sizes="(max-width: 720px) 100vw, 20rem" />
+			</a>
+		)
+	}
+	<div class="talk-body">
+		<p class="talk-kind">
+			<Icon name={video ? 'video' : 'mic'} />
+			{kind}
+		</p>
+		<p class="talk-event">{event}</p>
+		<p class="talk-when">{host ? `Hosted at ${host}, ${date}` : date}</p>
+		<div class="talk-actions">
+			{
+				slidesHref && (
+					<a class="talk-button slides" href={slidesHref}>
+						<Icon name="presentation" />
+						View the slides
+					</a>
+				)
+			}
+			{
+				watchUrl && (
+					<a class="talk-button youtube" href={watchUrl} target="_blank" rel="noopener">
+						<YouTubeMark />
+						Watch on YouTube
+					</a>
+				)
+			}
+			{
+				recapHref && (
+					<a class="talk-button linkedin" href={recapHref} target="_blank" rel="noopener">
+						<LinkedInMark />
+						Event recap on LinkedIn
+					</a>
+				)
+			}
+		</div>
+	</div>
+	{videoSchema && <script type="application/ld+json" set:html={JSON.stringify(videoSchema).replace(/</g, '\\u003c')} />}
+</aside>
+
+<script>
+	// YouTube's player is only fetched once the reader presses play, so the page stays fast and sets no YouTube cookies.
+	for (const player of document.querySelectorAll<HTMLElement>('.player[data-youtube-id]')) {
+		player.querySelector('a')?.addEventListener('click', (event) => {
+			if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+			event.preventDefault();
+			const frame = document.createElement('iframe');
+			frame.src = `https://www.youtube-nocookie.com/embed/${player.dataset.youtubeId}?autoplay=1&rel=0`;
+			frame.title = player.dataset.title ?? 'Video';
+			frame.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+			frame.allowFullscreen = true;
+			player.replaceChildren(frame);
+			frame.focus();
+		});
+	}
+</script>
+
+<style>
+	.talk {
+		display: grid;
+		grid-template-columns: minmax(0, 20rem) minmax(0, 1fr);
+		align-items: center;
+		gap: 1.5rem;
+		padding: 0.75rem;
+		border-radius: var(--radius-xl);
+		background: var(--white);
+		box-shadow:
+			inset 0 0 0 1px var(--rule),
+			var(--lift);
+		font-family: var(--font-sans);
+	}
+
+	.cover {
+		display: block;
+		overflow: hidden;
+		border-radius: var(--radius-l);
+		background: var(--ink);
+		box-shadow: 0 0 0 0 var(--c);
+		transition: box-shadow 0.2s var(--ease);
+	}
+
+	.cover:hover,
+	.cover:focus-visible {
+		box-shadow: 0 0 0 3px var(--c);
+	}
+
+	.cover :global(img) {
+		display: block;
+		width: 100%;
+		height: auto;
+		aspect-ratio: 16 / 9;
+		object-fit: cover;
+		margin: 0;
+	}
+
+	.talk-body {
+		display: grid;
+		gap: 0.3rem;
+		padding-right: 0.75rem;
+	}
+
+	.talk-body p {
+		margin: 0;
+	}
+
+	.talk-kind {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		font-size: var(--t-small);
+		font-weight: 650;
+		color: var(--cink);
+	}
+
+	.talk-kind :global(.icon) {
+		flex: none;
+		width: 1rem;
+		height: 1rem;
+	}
+
+	.talk-when {
+		font-size: var(--t-small);
+		color: var(--quiet);
+	}
+
+	.talk-event {
+		font-family: var(--font-display);
+		font-size: clamp(1.2rem, 1.05rem + 0.5vw, 1.45rem);
+		font-weight: 800;
+		line-height: 1.15;
+		letter-spacing: -0.025em;
+		color: var(--ink);
+		text-wrap: balance;
+	}
+
+	.talk-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		margin-top: 0.7rem;
+	}
+
+	.talk-button {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		height: 2.6rem;
+		padding-inline: 1rem 1.15rem;
+		border-radius: 999px;
+		font-size: var(--t-ui);
+		font-weight: 650;
+		line-height: 1;
+		color: var(--white);
+		text-decoration: none;
+		white-space: nowrap;
+		transition: background-color 0.2s var(--ease);
+	}
+
+	.talk-button :global(svg) {
+		flex: none;
+		width: 1.1rem;
+		height: 1.1rem;
+	}
+
+	.slides {
+		background: var(--ink);
+	}
+
+	.slides:hover {
+		background: #2c3142;
+	}
+
+	.youtube {
+		background: #c4302b;
+	}
+
+	.youtube:hover {
+		background: #a3241f;
+	}
+
+	.linkedin {
+		background: #0a66c2;
+	}
+
+	.linkedin:hover {
+		background: #004182;
+	}
+
+	.has-video {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 1rem;
+	}
+
+	.player {
+		position: relative;
+		aspect-ratio: 16 / 9;
+		overflow: hidden;
+		border-radius: var(--radius-l);
+		background: var(--ink);
+	}
+
+	.player .cover {
+		position: absolute;
+		inset: 0;
+		border-radius: 0;
+		box-shadow: none;
+	}
+
+	.player .cover:focus-visible {
+		outline-offset: -4px;
+	}
+
+	.player :global(iframe) {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		border: 0;
+	}
+
+	.play {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		display: grid;
+		place-items: center;
+		width: clamp(3.5rem, 2.5rem + 4vw, 5rem);
+		aspect-ratio: 1;
+		border-radius: 50%;
+		background: var(--white);
+		color: var(--ink);
+		box-shadow: 0 10px 30px -8px rgb(0 0 0 / 0.45);
+		translate: -50% -50%;
+		transition:
+			background-color 0.2s var(--ease),
+			color 0.2s var(--ease),
+			scale 0.2s var(--ease);
+	}
+
+	.play svg {
+		width: 42%;
+		margin-left: 6%;
+		fill: currentColor;
+	}
+
+	.cover:hover .play,
+	.cover:focus-visible .play {
+		background: var(--c);
+		color: var(--white);
+		scale: 1.06;
+	}
+
+	.runtime {
+		position: absolute;
+		right: 0.75rem;
+		bottom: 0.75rem;
+		padding: 0.3rem 0.6rem;
+		border-radius: 999px;
+		background: rgb(20 23 34 / 0.78);
+		color: var(--white);
+		font-size: var(--t-small);
+		font-weight: 650;
+		font-variant-numeric: tabular-nums;
+		line-height: 1;
+	}
+
+	.has-video .talk-body {
+		grid-template-columns: minmax(0, 1fr) auto;
+		column-gap: 1.5rem;
+		padding: 0 0.75rem 0.5rem;
+	}
+
+	.has-video .talk-body > p {
+		grid-column: 1;
+	}
+
+	.has-video .talk-actions {
+		grid-column: 2;
+		grid-row: 1 / span 3;
+		align-self: center;
+		margin-top: 0;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.play {
+			transition: none;
+		}
+
+		.cover:hover .play,
+		.cover:focus-visible .play {
+			scale: none;
+		}
+	}
+
+	@media (max-width: 720px) {
+		.talk {
+			grid-template-columns: minmax(0, 1fr);
+			gap: 1rem;
+		}
+
+		.talk-body,
+		.has-video .talk-body {
+			grid-template-columns: minmax(0, 1fr);
+			padding: 0 0.5rem 0.5rem;
+		}
+
+		.has-video .talk-actions {
+			grid-column: 1;
+			grid-row: auto;
+			margin-top: 0.7rem;
+		}
+	}
+</style>

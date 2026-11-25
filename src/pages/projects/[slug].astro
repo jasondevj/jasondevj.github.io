@@ -1,0 +1,484 @@
+---
+import { render } from 'astro:content';
+import Icon from '../../components/Icon.astro';
+import Base from '../../layouts/Base.astro';
+import { activeYears, cloneCommand, getProjects, type Project } from '../../lib/projects';
+import { breadcrumbSchema, softwareSourceCodeSchema } from '../../lib/schema';
+import '../../styles/prose.css';
+
+export async function getStaticPaths() {
+	const projects = await getProjects();
+	return projects.map((project) => ({
+		params: { slug: project.id },
+		props: { project, others: projects.filter((other) => other.id !== project.id).slice(0, 3) },
+	}));
+}
+
+interface Props {
+	project: Project;
+	others: Project[];
+}
+
+const { project, others } = Astro.props;
+const { name, summary, repo, language, license, stars, role, highlights } = project.data;
+const { Content } = await render(project);
+const clone = cloneCommand(project);
+const folder = repo.split('/').pop() ?? name;
+const highlightLines = ['ae', 'sa', 'hs'];
+const facts = [
+	{ label: 'Language', value: language },
+	{ label: 'Active', value: activeYears(project) },
+	{ label: 'My role', value: role === 'author' ? 'Author' : 'Contributor' },
+	{ label: 'Licence', value: license ?? 'None specified' },
+	...(stars > 0 ? [{ label: 'GitHub stars', value: `${stars}` }] : []),
+];
+---
+
+<Base
+	title={name}
+	description={summary}
+	image={`/og/projects/${project.id}.png`}
+	jsonLd={[
+		softwareSourceCodeSchema(project),
+		breadcrumbSchema([
+			{ name: 'Home', path: '/' },
+			{ name: 'Projects', path: '/projects/' },
+			{ name, path: `/projects/${project.id}/` },
+		]),
+	]}
+>
+	<section class="shell page-head project-head">
+		<h1>{name}</h1>
+		<p class="lede">{summary}</p>
+		<div class="head-actions">
+			<a class="button" href={repo} target="_blank" rel="noopener">
+				<Icon name="github" />
+				View on GitHub
+			</a>
+			<ul class="chips" aria-label="Project facts">
+				<li>{language}</li>
+				<li>{activeYears(project)}</li>
+				<li>{role === 'author' ? 'Author' : 'Contributor'}</li>
+				{
+					stars > 0 && (
+						<li>
+							<Icon name="star" /> {stars}
+						</li>
+					)
+				}
+			</ul>
+		</div>
+	</section>
+
+	{
+		highlights.length > 0 && (
+			<section class="shell highlights" aria-label="Highlights">
+				<ul>
+					{highlights.map(({ title, text }, index) => (
+						<li class={`line-${highlightLines[index % highlightLines.length]}`}>
+							<span class="station" aria-hidden="true" />
+							<h2>{title}</h2>
+							<p>{text}</p>
+						</li>
+					))}
+				</ul>
+			</section>
+		)
+	}
+
+	<div class="shell layout">
+		<div class="prose">
+			<Content />
+		</div>
+
+		<aside class="side">
+			<div class="terminal" aria-label="Get the code">
+				<div class="terminal-bar" aria-hidden="true">
+					<span class="dot line-hs"></span>
+					<span class="dot line-nt"></span>
+					<span class="dot line-ae"></span>
+					<span class="terminal-title">Get the code</span>
+				</div>
+				<pre><code><span class="prompt">$</span> {clone}
+<span class="prompt">$</span> cd {folder}</code></pre>
+				<button class="copy" type="button" data-copy={clone}>
+					<Icon name="copy" />
+					<span data-copy-label>Copy clone command</span>
+				</button>
+			</div>
+
+			<section class="glance" aria-labelledby="glance-title">
+				<h2 id="glance-title">At a glance</h2>
+				<dl>
+					{
+						facts.map(({ label, value }) => (
+							<div>
+								<dt>{label}</dt>
+								<dd>{value}</dd>
+							</div>
+						))
+					}
+				</dl>
+			</section>
+		</aside>
+	</div>
+
+	{
+		others.length > 0 && (
+			<section class="shell more" aria-labelledby="more-projects">
+				<div class="more-head">
+					<h2 id="more-projects">More projects</h2>
+					<a href="/projects/">See all projects</a>
+				</div>
+				<ul class="more-list">
+					{others.map((other) => (
+						<li>
+							<a href={`/projects/${other.id}/`}>
+								<span class="more-top">
+									<span class="more-lang">{other.data.language}</span>
+									<span>{activeYears(other)}</span>
+								</span>
+								<span class="more-name">{other.data.name}</span>
+							</a>
+						</li>
+					))}
+				</ul>
+			</section>
+		)
+	}
+</Base>
+
+<script>
+	document.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach((button) => {
+		const label = button.querySelector('[data-copy-label]');
+		button.addEventListener('click', async () => {
+			await navigator.clipboard.writeText(button.dataset.copy ?? '');
+			if (!label) return;
+			label.textContent = 'Copied to clipboard';
+			setTimeout(() => (label.textContent = 'Copy clone command'), 1800);
+		});
+	});
+</script>
+
+<style>
+	.project-head h1 {
+		max-width: none;
+		overflow-wrap: anywhere;
+	}
+
+	.head-actions {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.6rem;
+		margin-top: 0.9rem;
+	}
+
+	.head-actions .button {
+		height: 2.3rem;
+		padding-inline: 1rem;
+		font-size: var(--t-small);
+	}
+
+	.head-actions .button :global(.icon) {
+		width: 0.95rem;
+		height: 0.95rem;
+	}
+
+	.chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+	}
+
+	.chips li {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		height: 1.85rem;
+		padding-inline: 0.75rem;
+		border-radius: 999px;
+		background: var(--white);
+		font-size: var(--t-small);
+		font-weight: 600;
+		color: var(--link);
+	}
+
+	.chips :global(.icon) {
+		width: 0.85rem;
+		height: 0.85rem;
+	}
+
+	.highlights {
+		margin-bottom: clamp(1.5rem, 4vw, 2.25rem);
+	}
+
+	.highlights ul {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+		gap: 0.75rem;
+	}
+
+	.highlights li {
+		display: grid;
+		grid-template-columns: auto 1fr;
+		column-gap: 0.8rem;
+		padding: 0.9rem 1.1rem;
+		border-radius: var(--radius-m);
+		background: var(--tint);
+	}
+
+	.station {
+		grid-row: span 2;
+		width: 1.1rem;
+		height: 1.1rem;
+		margin-top: 0.15rem;
+		border: 4px solid var(--c);
+		border-radius: 50%;
+		background: var(--white);
+	}
+
+	.highlights h2 {
+		font-size: 1.02rem;
+		font-weight: 750;
+		letter-spacing: -0.015em;
+		color: var(--ink);
+	}
+
+	.highlights p {
+		margin-top: 0.2rem;
+		font-size: var(--t-small);
+		line-height: 1.5;
+		color: var(--body);
+	}
+
+	.layout {
+		display: grid;
+		grid-template-columns: minmax(0, var(--measure)) minmax(0, 19rem);
+		justify-content: space-between;
+		align-items: start;
+		gap: clamp(2rem, 6vw, 5rem);
+	}
+
+	.side {
+		position: sticky;
+		top: 5rem;
+		display: grid;
+		gap: 1rem;
+	}
+
+	.terminal {
+		overflow: hidden;
+		border: 1px solid var(--rule);
+		border-radius: var(--radius-l);
+		background: var(--white);
+		box-shadow: var(--lift);
+	}
+
+	.terminal-bar {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.6rem 0.9rem;
+		border-bottom: 1px solid var(--rule);
+		background: var(--paper);
+	}
+
+	.dot {
+		width: 0.65rem;
+		height: 0.65rem;
+		border-radius: 50%;
+		background: var(--c);
+	}
+
+	.terminal-title {
+		margin-left: 0.4rem;
+		font-size: var(--t-small);
+		font-weight: 600;
+		color: var(--quiet);
+	}
+
+	pre {
+		margin: 0;
+		padding: 0.8rem 0.9rem;
+		font-family: var(--font-mono);
+		font-size: 0.76rem;
+		line-height: 1.75;
+		white-space: pre-wrap;
+		overflow-wrap: anywhere;
+		color: var(--ink);
+	}
+
+	.prompt {
+		margin-right: 0.3rem;
+		color: var(--line-ae);
+		user-select: none;
+	}
+
+	.copy {
+		display: flex;
+		align-items: center;
+		gap: 0.45rem;
+		width: calc(100% - 1.8rem);
+		margin: 0 0.9rem 0.9rem;
+		padding: 0.5rem 0.8rem;
+		border: 0;
+		border-radius: 999px;
+		background: var(--band);
+		color: var(--link);
+		font: inherit;
+		font-size: var(--t-small);
+		font-weight: 600;
+		cursor: pointer;
+		transition: background-color 0.2s var(--ease);
+	}
+
+	.copy:hover {
+		background: #e2eaff;
+	}
+
+	.copy :global(.icon) {
+		width: 0.9rem;
+		height: 0.9rem;
+	}
+
+	.glance {
+		padding: 1rem 1.1rem;
+		border: 1px solid var(--rule);
+		border-radius: var(--radius-l);
+		background: var(--white);
+	}
+
+	.glance h2 {
+		font-size: 1.02rem;
+		letter-spacing: -0.015em;
+	}
+
+	dl {
+		margin: 0.5rem 0 0;
+	}
+
+	dl div {
+		display: flex;
+		justify-content: space-between;
+		gap: 1rem;
+		padding-block: 0.45rem;
+		border-bottom: 1px solid var(--rule);
+		font-size: var(--t-small);
+	}
+
+	dl div:last-child {
+		border-bottom: 0;
+	}
+
+	dt {
+		color: var(--quiet);
+	}
+
+	dd {
+		margin: 0;
+		font-weight: 600;
+		text-align: right;
+	}
+
+	.more {
+		display: grid;
+		grid-template-columns: 9rem minmax(0, 1fr);
+		align-items: start;
+		gap: 0.75rem 1.5rem;
+		margin-top: 1.5rem;
+		padding-top: 1rem;
+		background: linear-gradient(var(--rule), var(--rule)) top center / calc(100% - var(--gutter) * 2) 1px no-repeat;
+	}
+
+	.more-head {
+		display: grid;
+		gap: 0.3rem;
+		padding-top: 0.2rem;
+	}
+
+	.more-head h2 {
+		font-size: 1.2rem;
+		font-weight: 750;
+		letter-spacing: -0.02em;
+	}
+
+	.more-head a {
+		font-size: var(--t-ui);
+		font-weight: 600;
+		color: var(--link);
+	}
+
+	.more-list {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+		gap: 0.75rem;
+	}
+
+	.more-list a {
+		display: flex;
+		flex-direction: column;
+		gap: 0.45rem;
+		height: 100%;
+		padding: 0.8rem 1rem 0.9rem;
+		border: 1px solid var(--rule);
+		border-left: 4px solid var(--line-sa);
+		border-radius: var(--radius-m);
+		background: var(--white);
+		transition: border-color 0.2s var(--ease);
+	}
+
+	.more-list a:hover {
+		border-color: var(--line-sa);
+	}
+
+	.more-top {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		font-size: var(--t-small);
+		color: var(--quiet);
+	}
+
+	.more-lang {
+		padding: 0.1rem 0.55rem;
+		border-radius: 999px;
+		background: var(--band);
+		color: var(--link);
+		font-weight: 700;
+	}
+
+	.more-name {
+		font-family: var(--font-display);
+		font-size: 1.02rem;
+		font-weight: 700;
+		letter-spacing: -0.015em;
+		overflow-wrap: anywhere;
+	}
+
+	.more-list a:hover .more-name {
+		color: var(--link);
+	}
+
+	@media (max-width: 760px) {
+		.more {
+			grid-template-columns: 1fr;
+		}
+
+		.more-head {
+			display: flex;
+			align-items: baseline;
+			justify-content: space-between;
+		}
+	}
+
+	@media (max-width: 960px) {
+		.layout {
+			grid-template-columns: minmax(0, 1fr);
+		}
+
+		.side {
+			position: static;
+		}
+	}
+</style>

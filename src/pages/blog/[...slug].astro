@@ -1,0 +1,32 @@
+---
+import { render } from 'astro:content';
+import Post from '../../layouts/Post.astro';
+import { buildStops, getPosts, type Stop } from '../../lib/posts';
+
+export async function getStaticPaths() {
+	const network = buildStops(await getPosts());
+	return network.map((stop) => {
+		const primaryLineId = stop.stations[0]?.line.id;
+		const sameLine = network.filter(
+			(other) => other !== stop && other.stations.some(({ line }) => line.id === primaryLineId),
+		);
+		const elsewhere = network.filter((other) => other !== stop && !sameLine.includes(other));
+		return {
+			params: { slug: stop.post.id },
+			props: { stop, related: [...sameLine, ...elsewhere].slice(0, 3) },
+		};
+	});
+}
+
+interface Props {
+	stop: Stop;
+	related: Stop[];
+}
+
+const { stop, related } = Astro.props;
+const { Content, headings } = await render(stop.post);
+---
+
+<Post stop={stop} headings={headings} related={related}>
+	<Content />
+</Post>

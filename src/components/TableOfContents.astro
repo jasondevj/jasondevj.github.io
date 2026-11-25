@@ -1,0 +1,132 @@
+---
+import type { MarkdownHeading } from 'astro';
+
+interface Props {
+	headings: MarkdownHeading[];
+}
+
+const { headings } = Astro.props;
+---
+
+<nav class="toc" aria-labelledby="toc-title">
+	<div class="toc-inner">
+		<h2 id="toc-title">In this post</h2>
+		<ol>
+			{
+				headings.map(({ depth, slug, text }) => (
+					<li class={`depth-${depth}`}>
+						<a href={`#${slug}`} data-toc-link={slug}>
+							{text}
+						</a>
+					</li>
+				))
+			}
+		</ol>
+	</div>
+</nav>
+
+<script>
+	const links = new Map(
+		[...document.querySelectorAll<HTMLAnchorElement>('[data-toc-link]')].map((link) => [link.dataset.tocLink, link]),
+	);
+	const headings = [...links.keys()]
+		.map((id) => (id ? document.getElementById(id) : null))
+		.filter((heading): heading is HTMLElement => heading !== null);
+
+	const observer = new IntersectionObserver(
+		(entries) => {
+			const visible = entries.find((entry) => entry.isIntersecting);
+			if (!visible) return;
+			links.forEach((link, slug) => {
+				if (slug === visible.target.id) link.setAttribute('aria-current', 'location');
+				else link.removeAttribute('aria-current');
+			});
+		},
+		{ rootMargin: '-15% 0px -70% 0px' },
+	);
+
+	headings.forEach((heading) => observer.observe(heading));
+</script>
+
+<style>
+	.toc-inner {
+		position: sticky;
+		top: 6.75rem;
+		max-height: calc(100dvh - 8rem);
+		overflow-y: auto;
+	}
+
+	h2 {
+		margin-bottom: 1rem;
+		font-size: 1.15rem;
+	}
+
+	ol {
+		position: relative;
+	}
+
+	ol::before {
+		content: '';
+		position: absolute;
+		left: 0.45rem;
+		top: 0.55rem;
+		bottom: 0.55rem;
+		width: 5px;
+		border-radius: 3px;
+		background: var(--c);
+	}
+
+	li {
+		position: relative;
+		padding-left: 1.75rem;
+	}
+
+	li + li {
+		margin-top: 0.7rem;
+	}
+
+	li::before {
+		content: '';
+		position: absolute;
+		left: 0.2rem;
+		top: 0.3rem;
+		width: 0.9rem;
+		height: 0.9rem;
+		box-sizing: border-box;
+		border: 3px solid var(--c);
+		border-radius: 50%;
+		background: var(--station-fill);
+	}
+
+	li.depth-3::before {
+		left: 0.35rem;
+		top: 0.45rem;
+		width: 0.6rem;
+		height: 0.6rem;
+		border-width: 2px;
+	}
+
+	li:has(a[aria-current])::before {
+		background: var(--c);
+	}
+
+	a {
+		display: block;
+		font-size: var(--t-ui);
+		line-height: 1.4;
+		color: var(--quiet);
+	}
+
+	li.depth-3 a {
+		font-size: var(--t-small);
+	}
+
+	a:hover,
+	a[aria-current] {
+		color: var(--ink);
+	}
+
+	a[aria-current] {
+		font-weight: 600;
+	}
+</style>

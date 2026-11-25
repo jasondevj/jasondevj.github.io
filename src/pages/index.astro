@@ -1,0 +1,124 @@
+---
+import HeroMap from '../components/HeroMap.astro';
+import LineLegend from '../components/LineLegend.astro';
+import ProjectList from '../components/ProjectList.astro';
+import PostCard from '../components/PostCard.astro';
+import Base from '../layouts/Base.astro';
+import { activeLines, buildStops, getPosts } from '../lib/posts';
+import { getProjects } from '../lib/projects';
+import { personSchema, websiteSchema } from '../lib/schema';
+import { SITE } from '../site.config';
+
+const network = buildStops(await getPosts());
+const lines = activeLines(network);
+const counts = new Map(lines.map((line) => [line.id, network.filter(({ stations }) => stations.some((s) => s.line.id === line.id)).length]));
+const latest = network.slice(0, 6);
+const featuredProjects = (await getProjects()).filter(({ data }) => data.featured);
+---
+
+<Base jsonLd={[websiteSchema(), personSchema()]}>
+	<section class="shell hero band">
+		<div class="intro">
+			<h1>I write about AI engineering, the systems underneath it, and the people who build both.</h1>
+			<p class="lede">
+				I'm Jason, a {SITE.role.toLowerCase()} in {SITE.location}. I've spent years on high-throughput Java
+				systems, and these days most of my work is AI agents, RAG pipelines and the guardrails around them.
+			</p>
+			<LineLegend lines={lines} counts={counts} />
+		</div>
+		<figure class="board">
+			<HeroMap />
+			<figcaption>Each topic I write about is a line. Posts are the stops along it.</figcaption>
+		</figure>
+	</section>
+
+	<section class="shell section" aria-labelledby="latest">
+		<div class="section-title">
+			<h2 id="latest">Latest writing</h2>
+			<a href="/blog/">See all writing</a>
+		</div>
+		<ul class="post-grid">
+			{
+				latest.map((stop) => (
+					<li>
+						<PostCard stop={stop} variant="full" />
+					</li>
+				))
+			}
+		</ul>
+	</section>
+
+	<section class="shell section band" aria-labelledby="projects">
+		<div class="section-title">
+			<div>
+				<h2 id="projects">Open source</h2>
+				<p>Libraries and tools I've built or contributed to, mostly for the JVM.</p>
+			</div>
+			<a href="/projects/">See all projects</a>
+		</div>
+		<ProjectList projects={featuredProjects} />
+	</section>
+</Base>
+
+<style>
+	.hero {
+		display: grid;
+		grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+		gap: clamp(2rem, 5vw, 4rem);
+		align-items: center;
+		padding-top: calc(var(--header-space) + clamp(2.5rem, 7vw, 5rem));
+		padding-bottom: clamp(2.5rem, 6vw, 4rem);
+	}
+
+	h1 {
+		font-size: clamp(2.6rem, 1.5rem + 3.3vw, 4.35rem);
+		font-weight: 800;
+		line-height: 1;
+		letter-spacing: -0.03em;
+	}
+
+	.lede {
+		margin-top: 1.5rem;
+	}
+
+	.intro :global(.chips) {
+		margin-top: 2.25rem;
+	}
+
+	.post-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+		gap: 1rem;
+	}
+
+	.board {
+		margin: 0;
+		padding: clamp(1.5rem, 3vw, 2.25rem);
+		border: 1px solid var(--rule);
+		border-radius: var(--radius-xl);
+		background: var(--white);
+		box-shadow: var(--lift);
+	}
+
+	.board :global(.hero-map) {
+		margin-inline: auto;
+	}
+
+	figcaption {
+		margin-top: 1.25rem;
+		padding-top: 1rem;
+		border-top: 1px solid var(--rule);
+		font-size: var(--t-ui);
+		color: var(--quiet);
+	}
+
+	@media (max-width: 900px) {
+		.hero {
+			grid-template-columns: 1fr;
+		}
+
+		.board :global(.hero-map) {
+			max-width: 20rem;
+		}
+	}
+</style>

@@ -1,0 +1,529 @@
+---
+import { Image } from 'astro:assets';
+import type { MarkdownHeading } from 'astro';
+import FormattedDate from '../components/FormattedDate.astro';
+import Icon from '../components/Icon.astro';
+import LinkedInMark from '../components/LinkedInMark.astro';
+import PostCard from '../components/PostCard.astro';
+import ShareLinks from '../components/ShareLinks.astro';
+import TableOfContents from '../components/TableOfContents.astro';
+import { hasFullText, readingMinutes, type Stop, tagSlug } from '../lib/posts';
+import { blogPostingSchema, breadcrumbSchema } from '../lib/schema';
+import { SITE } from '../site.config';
+import '../styles/prose.css';
+import Base from './Base.astro';
+
+interface Props {
+	stop: Stop;
+	headings: MarkdownHeading[];
+	related: Stop[];
+}
+
+const { stop, headings, related } = Astro.props;
+const { post, stations } = stop;
+const { title, description, pubDate, updatedDate, tags, heroImage, heroAlt, draft, originalUrl, originalSource } = post.data;
+const fullText = hasFullText(post);
+const sourceName = originalSource ?? 'the original site';
+const fromLinkedIn = originalUrl?.includes('linkedin.com') ?? false;
+const ogImage = `/og/${post.id}.png`;
+const canonical = new URL(`/blog/${post.id}/`, SITE.url).toString();
+const tocHeadings = headings.filter(({ depth }) => depth === 2 || depth === 3);
+const primaryLine = stations[0]?.line.id ?? 'nt';
+const ARCHIVE_AGE_YEARS = 5;
+const yearsOld = new Date().getUTCFullYear() - pubDate.getUTCFullYear();
+const fromArchive = fullText && yearsOld >= ARCHIVE_AGE_YEARS;
+const showToc = fullText && tocHeadings.length >= 3;
+---
+
+<Base
+	title={title}
+	description={description}
+	image={ogImage}
+	type="article"
+	publishedTime={pubDate}
+	modifiedTime={updatedDate ?? pubDate}
+	tags={tags}
+	noindex={draft || !fullText}
+	jsonLd={[
+		blogPostingSchema(post, ogImage),
+		breadcrumbSchema([
+			{ name: 'Home', path: '/' },
+			{ name: 'Writing', path: '/blog/' },
+			{ name: title, path: `/blog/${post.id}/` },
+		]),
+	]}
+>
+	{fullText && <div class={`progress line-${primaryLine}`} aria-hidden="true"></div>}
+
+	<article class:list={['post', `line-${primaryLine}`, { single: !showToc }]}>
+		<header class="shell post-head">
+			<div class="head-meta">
+				<FormattedDate date={pubDate} />
+				{fullText && <span>{readingMinutes(post)} min read</span>}
+				{
+					updatedDate && (
+						<span>
+							Updated <FormattedDate date={updatedDate} />
+						</span>
+					)
+				}
+				{
+					originalUrl && (
+						<a class="original" href={originalUrl} target="_blank" rel="noopener">
+							{fromLinkedIn && <LinkedInMark />}
+							First published on {sourceName}
+							<Icon name="arrow-up-right" />
+						</a>
+					)
+				}
+			</div>
+			<h1>{title}</h1>
+			<p class="lede">{description}</p>
+		</header>
+
+		<div class="shell">
+			{
+				heroImage && (
+					<figure class="hero">
+						<Image
+							src={heroImage}
+							alt={heroAlt ?? ''}
+							widths={[720, 1080, 1600]}
+							sizes="(max-width: 1160px) 100vw, 1080px"
+							loading="eager"
+							fetchpriority="high"
+						/>
+					</figure>
+				)
+			}
+
+			<div class:list={['layout', { 'with-toc': showToc }]}>
+				<div class="main-column">
+					{
+						fromArchive && (
+							<p class="archive-note">
+								From the archive: I wrote this in {pubDate.getUTCFullYear()}, so some tools and details may be out of date.
+							</p>
+						)
+					}
+					{
+						fullText ? (
+							<div id="post-body" class="prose">
+								<slot />
+							</div>
+						) : (
+							<section class="elsewhere" aria-labelledby="elsewhere-title">
+								<a class="preview" href={originalUrl} target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">
+									<img src={ogImage} alt="" width="1200" height="630" loading="lazy" />
+								</a>
+								<div class="elsewhere-copy">
+									<h2 id="elsewhere-title">The full article is on {sourceName}</h2>
+									<p>
+										I first published this piece on {sourceName}. You can read the whole thing there, along with the comments
+										and discussion it started.
+									</p>
+									{originalUrl && (
+										<a class:list={['button', { 'button-linkedin': fromLinkedIn }]} href={originalUrl} target="_blank" rel="noopener">
+											{fromLinkedIn && <LinkedInMark />}
+											Read it on {sourceName}
+											<Icon name="arrow-up-right" />
+										</a>
+									)}
+								</div>
+							</section>
+						)
+					}
+					<div id="post-body-end" hidden></div>
+
+					<footer class="post-foot">
+						{
+							fullText && originalUrl && !fromArchive && (
+								<p class="discussion">
+									This post first appeared on {sourceName}.{' '}
+									<a class="link" href={originalUrl} target="_blank" rel="noopener">
+										Join the discussion there
+									</a>
+									.
+								</p>
+							)
+						}
+						<div class="foot-bar">
+							{
+								!showToc && tags.length > 0 && (
+									<ul class="tags" aria-label="Tags">
+										{tags.map((tag) => (
+											<li>
+												<a href={`/tags/${tagSlug(tag)}/`}>{tag}</a>
+											</li>
+										))}
+									</ul>
+								)
+							}
+							<div class="share-row">
+								<p>Share this post</p>
+								<ShareLinks url={canonical} title={title} />
+							</div>
+						</div>
+					</footer>
+				</div>
+
+				{
+					showToc && (
+						<aside class="side">
+							<TableOfContents headings={tocHeadings} />
+							{tags.length > 0 && (
+								<ul class="tags" aria-label="Tags">
+									{tags.map((tag) => (
+										<li>
+											<a href={`/tags/${tagSlug(tag)}/`}>{tag}</a>
+										</li>
+									))}
+								</ul>
+							)}
+						</aside>
+					)
+				}
+			</div>
+		</div>
+	</article>
+
+	{
+		related.length > 0 && (
+			<section class="shell keep-reading" aria-labelledby="keep-reading">
+				<div class="keep-head">
+					<h2 id="keep-reading">Keep reading</h2>
+					<a href="/blog/">See all writing</a>
+				</div>
+				<ul class="cards">
+					{related.map((other) => (
+						<li>
+							<PostCard stop={other} />
+						</li>
+					))}
+				</ul>
+			</section>
+		)
+	}
+</Base>
+
+<script>
+	const copyIcon =
+		'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>';
+	const checkIcon =
+		'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+
+	const body = document.getElementById('post-body');
+
+	body?.querySelectorAll<HTMLHeadingElement>('h2[id], h3[id], h4[id]').forEach((heading) => {
+		const anchor = document.createElement('a');
+		anchor.className = 'heading-anchor';
+		anchor.href = `#${heading.id}`;
+		anchor.setAttribute('aria-label', `Link to this section: ${heading.textContent}`);
+		anchor.textContent = '#';
+		heading.prepend(anchor);
+	});
+
+	body?.querySelectorAll<HTMLPreElement>('pre.astro-code').forEach((pre) => {
+		const wrapper = document.createElement('div');
+		wrapper.className = 'code-block';
+		pre.replaceWith(wrapper);
+		wrapper.append(pre);
+
+		const button = document.createElement('button');
+		button.type = 'button';
+		button.className = 'code-copy';
+		button.setAttribute('aria-label', 'Copy code');
+		button.innerHTML = copyIcon;
+		button.addEventListener('click', async () => {
+			await navigator.clipboard.writeText(pre.innerText);
+			button.innerHTML = checkIcon;
+			button.setAttribute('aria-label', 'Copied');
+			setTimeout(() => {
+				button.innerHTML = copyIcon;
+				button.setAttribute('aria-label', 'Copy code');
+			}, 1600);
+		});
+		wrapper.append(button);
+	});
+</script>
+
+<style>
+	.progress {
+		position: fixed;
+		inset: 0 0 auto;
+		z-index: 60;
+		height: 3px;
+		background: var(--c);
+		transform-origin: 0 50%;
+		transform: scaleX(0);
+	}
+
+	@supports (animation-timeline: scroll()) {
+		.progress {
+			animation: read-progress linear both;
+			animation-timeline: scroll(root);
+		}
+	}
+
+	@keyframes read-progress {
+		to {
+			transform: scaleX(1);
+		}
+	}
+
+	.post-head {
+		padding-top: calc(var(--header-space) + 0.5rem);
+		padding-bottom: 1rem;
+		margin-bottom: 1.25rem;
+		background: var(--tint);
+		box-shadow: 0 0 0 100vmax var(--tint);
+		clip-path: inset(0 -100vmax);
+	}
+
+	.head-meta {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.4rem 0.9rem;
+		font-size: var(--t-small);
+		color: var(--body);
+	}
+
+
+	.original {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		height: 1.85rem;
+		padding-inline: 0.75rem;
+		border-radius: 999px;
+		background: var(--white);
+		color: var(--ink);
+		font-weight: 600;
+		transition: box-shadow 0.2s var(--ease);
+	}
+
+	.original:hover {
+		box-shadow: inset 0 0 0 2px var(--c);
+	}
+
+	.original :global(.icon) {
+		width: 0.85rem;
+		height: 0.85rem;
+	}
+
+	.original :global(.linkedin-mark) {
+		color: #0a66c2;
+	}
+
+	h1 {
+		margin-top: 0.45rem;
+		font-size: clamp(1.8rem, 1.35rem + 1.4vw, 2.5rem);
+		font-weight: 800;
+		line-height: 1.06;
+		letter-spacing: -0.03em;
+	}
+
+	.post-head .lede {
+		max-width: 62rem;
+		margin-top: 0.4rem;
+		font-size: 1.0625rem;
+	}
+
+	.hero {
+		margin: 0 0 clamp(1.5rem, 4vw, 2.5rem);
+	}
+
+	.hero :global(img) {
+		width: 100%;
+		border-radius: var(--radius-xl);
+	}
+
+	.post.single {
+		--shell: 52rem;
+	}
+
+	.layout.with-toc {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) 15rem;
+		align-items: start;
+		gap: clamp(2rem, 4vw, 3.5rem);
+	}
+
+	.side {
+		position: sticky;
+		top: 5rem;
+		display: grid;
+		gap: 1.5rem;
+	}
+
+	.side :global(.toc-inner) {
+		position: static;
+		max-height: none;
+	}
+
+	.tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
+	}
+
+	.tags a {
+		display: inline-flex;
+		align-items: center;
+		height: 1.8rem;
+		padding-inline: 0.75rem;
+		border-radius: 999px;
+		background: var(--paper);
+		box-shadow: inset 0 0 0 1px var(--rule-strong);
+		font-size: var(--t-small);
+		font-weight: 600;
+		color: var(--body);
+	}
+
+	.tags a::before {
+		content: '#';
+		margin-right: 0.15rem;
+		color: var(--quiet);
+	}
+
+	.tags a:hover {
+		color: var(--ink);
+		box-shadow: inset 0 0 0 1.5px var(--ink);
+	}
+
+	.elsewhere {
+		overflow: hidden;
+		border: 1px solid var(--rule);
+		border-radius: var(--radius-xl);
+		background: var(--white);
+		box-shadow: var(--lift);
+	}
+
+	.preview img {
+		width: 100%;
+		border-bottom: 1px solid var(--rule);
+	}
+
+	.elsewhere-copy {
+		padding: clamp(1.25rem, 3vw, 1.75rem);
+	}
+
+	.elsewhere h2 {
+		font-size: clamp(1.4rem, 1.2rem + 0.8vw, 1.75rem);
+		font-weight: 800;
+		letter-spacing: -0.03em;
+	}
+
+	.elsewhere p {
+		margin-top: 0.5rem;
+		color: var(--body);
+	}
+
+	.elsewhere .button {
+		height: 2.6rem;
+		margin-top: 1.1rem;
+	}
+
+	.post-foot {
+		display: grid;
+		gap: 0.75rem;
+		margin-top: 1.25rem;
+	}
+
+	.archive-note {
+		margin-bottom: 1.25rem;
+		padding: 0.6rem 0.9rem;
+		border-radius: var(--radius-s);
+		background: var(--paper);
+		box-shadow: inset 3px 0 0 var(--c);
+		font-size: var(--t-small);
+		color: var(--body);
+	}
+
+	.discussion {
+		padding: 0.75rem 1rem;
+		border-radius: var(--radius-m);
+		background: var(--tint);
+		font-size: var(--t-ui);
+	}
+
+	.foot-bar {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem 1.5rem;
+		padding-top: 0.9rem;
+		border-top: 1px solid var(--rule);
+	}
+
+	.share-row {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		font-size: var(--t-ui);
+		font-weight: 600;
+		color: var(--quiet);
+	}
+
+	.keep-reading {
+		display: grid;
+		grid-template-columns: 9rem minmax(0, 1fr);
+		align-items: start;
+		gap: 0.75rem 1.5rem;
+		margin-top: 1.5rem;
+		padding-top: 1rem;
+		background: linear-gradient(var(--rule), var(--rule)) top center / calc(100% - var(--gutter) * 2) 1px no-repeat;
+	}
+
+	.keep-head {
+		display: grid;
+		gap: 0.3rem;
+		padding-top: 0.2rem;
+	}
+
+	.keep-head h2 {
+		font-size: 1.2rem;
+		font-weight: 750;
+		letter-spacing: -0.02em;
+	}
+
+	.keep-head a {
+		font-size: var(--t-ui);
+		font-weight: 600;
+		color: var(--link);
+	}
+
+	.cards {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+		gap: 0.75rem;
+	}
+
+	@media (max-width: 760px) {
+		.keep-reading {
+			grid-template-columns: 1fr;
+		}
+
+		.keep-head {
+			display: flex;
+			align-items: baseline;
+			justify-content: space-between;
+		}
+	}
+
+	@media (max-width: 1080px) {
+		.layout.with-toc {
+			grid-template-columns: minmax(0, 1fr);
+		}
+
+		.side {
+			position: static;
+		}
+
+		.side :global(.toc) {
+			display: none;
+		}
+	}
+</style>

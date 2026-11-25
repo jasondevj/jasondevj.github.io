@@ -1,0 +1,325 @@
+---
+import type { Line } from '../data/lines';
+import { groupByYear, type Stop } from '../lib/posts';
+import Icon from './Icon.astro';
+import PostCard from './PostCard.astro';
+
+interface Props {
+	stops: Stop[];
+	lines?: Line[];
+	filters?: boolean;
+}
+
+const { stops, lines = [], filters = false } = Astro.props;
+const byYear = groupByYear(stops.map(({ post }) => post));
+const stopById = new Map(stops.map((stop) => [stop.post.id, stop]));
+const countOn = (lineId: string) => stops.filter(({ stations }) => stations.some((s) => s.line.id === lineId)).length;
+const searchText = (stop: Stop) =>
+	[stop.post.data.title, stop.post.data.description, ...stop.post.data.tags, ...stop.stations.map(({ line }) => line.name)]
+		.join(' ')
+		.toLowerCase();
+const postsLabel = (count: number) => `${count} ${count === 1 ? 'post' : 'posts'}`;
+---
+
+<div class="archive" data-archive>
+	{
+		filters && (
+			<div class="toolbar">
+				<div class="chips" role="group" aria-label="Filter by topic">
+					<button type="button" class="chip all" data-topic="all" data-name="all topics" aria-pressed="true">
+						All<span class="count">{stops.length}</span>
+					</button>
+					{lines.map((line) => (
+						<button type="button" class={`chip line-${line.id}`} data-topic={line.id} data-name={line.name} aria-pressed="false">
+							<span class="dot" aria-hidden="true" />
+							{line.name}
+							<span class="count">{countOn(line.id)}</span>
+						</button>
+					))}
+				</div>
+				<label class="search">
+					<Icon name="search" />
+					<span class="sr-only">Search posts</span>
+					<input type="search" placeholder="Search posts" autocomplete="off" data-search />
+				</label>
+			</div>
+		)
+	}
+	{filters && <p class="status" aria-live="polite" data-status>Showing all {postsLabel(stops.length)}</p>}
+
+	{
+		byYear.map(([year, posts]) => (
+			<section class="year" data-year aria-labelledby={`year-${year}`}>
+				<h2 id={`year-${year}`}>
+					{year}
+					<span class="year-count" data-year-count>{postsLabel(posts.length)}</span>
+				</h2>
+				<ul class="grid">
+					{posts.map((post) => {
+						const stop = stopById.get(post.id)!;
+						return (
+							<li data-post data-lines={stop.stations.map(({ line }) => line.id).join(' ')} data-text={searchText(stop)}>
+								<PostCard stop={stop} variant="tile" />
+							</li>
+						);
+					})}
+				</ul>
+			</section>
+		))
+	}
+
+	{
+		filters && (
+			<div class="empty" hidden data-empty>
+				<p>No posts match that topic and search.</p>
+				<button type="button" class="button button-quiet" data-reset>
+					Show all posts
+				</button>
+			</div>
+		)
+	}
+</div>
+
+<script>
+	const archive = document.querySelector<HTMLElement>('[data-archive]');
+	const chips = [...(archive?.querySelectorAll<HTMLButtonElement>('[data-topic]') ?? [])];
+	const search = archive?.querySelector<HTMLInputElement>('[data-search]');
+
+	if (archive && chips.length > 0 && search) {
+		const items = [...archive.querySelectorAll<HTMLElement>('[data-post]')];
+		const years = [...archive.querySelectorAll<HTMLElement>('[data-year]')];
+		const status = archive.querySelector<HTMLElement>('[data-status]');
+		const empty = archive.querySelector<HTMLElement>('[data-empty]');
+		const topicNames = new Map(chips.map((chip) => [chip.dataset.topic, chip.dataset.name ?? '']));
+		const requested = new URLSearchParams(location.search).get('topic');
+		let topic = requested && topicNames.has(requested) ? requested : 'all';
+
+		const apply = () => {
+			const query = search.value.trim().toLowerCase();
+			let shown = 0;
+			for (const item of items) {
+				const onTopic = topic === 'all' || (item.dataset.lines ?? '').split(' ').includes(topic);
+				const matches = !query || (item.dataset.text ?? '').includes(query);
+				item.hidden = !(onTopic && matches);
+				if (!item.hidden) shown += 1;
+			}
+			for (const year of years) {
+				const visible = year.querySelectorAll('[data-post]:not([hidden])').length;
+				year.hidden = visible === 0;
+				const count = year.querySelector('[data-year-count]');
+				if (count) count.textContent = `${visible} ${visible === 1 ? 'post' : 'posts'}`;
+			}
+			for (const chip of chips) {
+				chip.setAttribute('aria-pressed', String(chip.dataset.topic === topic));
+			}
+			if (status) {
+				const where = topic === 'all' ? '' : ` in ${topicNames.get(topic)}`;
+				const matching = query ? ` matching "${search.value.trim()}"` : '';
+				status.textContent = `Showing ${shown} ${shown === 1 ? 'post' : 'posts'}${where}${matching}`;
+			}
+			if (empty) empty.hidden = shown > 0;
+			const url = new URL(location.href);
+			if (topic === 'all') url.searchParams.delete('topic');
+			else url.searchParams.set('topic', topic);
+			history.replaceState(null, '', url);
+		};
+
+		for (const chip of chips) {
+			chip.addEventListener('click', () => {
+				topic = chip.dataset.topic ?? 'all';
+				apply();
+			});
+		}
+		search.addEventListener('input', apply);
+		archive.querySelector('[data-reset]')?.addEventListener('click', () => {
+			topic = 'all';
+			search.value = '';
+			apply();
+			search.focus();
+		});
+		apply();
+	}
+</script>
+
+<style>
+	.toolbar {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem 1.5rem;
+	}
+
+	.chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
+	}
+
+	.chip {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		height: 2.4rem;
+		padding-inline: 0.85rem 0.4rem;
+		border: 0;
+		border-radius: 999px;
+		background: var(--tint, var(--paper));
+		color: var(--cink, var(--ink));
+		font: inherit;
+		font-size: var(--t-ui);
+		font-weight: 600;
+		cursor: pointer;
+		transition:
+			background-color 0.2s var(--ease),
+			box-shadow 0.2s var(--ease),
+			color 0.2s var(--ease);
+	}
+
+	.chip.all {
+		padding-left: 1rem;
+		box-shadow: inset 0 0 0 1px var(--rule-strong);
+	}
+
+	.chip:hover {
+		box-shadow: inset 0 0 0 2px var(--c, var(--ink));
+	}
+
+	.chip[aria-pressed='true'] {
+		background: var(--c, var(--ink));
+		color: var(--white);
+		box-shadow: none;
+	}
+
+	.dot {
+		width: 0.7rem;
+		height: 0.7rem;
+		border-radius: 50%;
+		background: var(--white);
+		box-shadow: inset 0 0 0 3px var(--c);
+	}
+
+	.chip[aria-pressed='true'] .dot {
+		box-shadow: inset 0 0 0 3px var(--white);
+		background: var(--c);
+	}
+
+	.count {
+		display: grid;
+		place-items: center;
+		min-width: 1.75rem;
+		height: 1.75rem;
+		padding-inline: 0.35rem;
+		border-radius: 999px;
+		background: var(--white);
+		color: var(--cink, var(--ink));
+		font-size: var(--t-small);
+		font-weight: 700;
+	}
+
+	.search {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		width: min(100%, 18rem);
+		height: 2.4rem;
+		padding-inline: 0.85rem;
+		border-radius: 999px;
+		background: var(--paper);
+		box-shadow: inset 0 0 0 1px var(--rule-strong);
+		color: var(--quiet);
+	}
+
+	.search:focus-within {
+		box-shadow: inset 0 0 0 2px var(--line-sa);
+	}
+
+	.search :global(.icon) {
+		width: 1rem;
+		height: 1rem;
+	}
+
+	.search input {
+		flex: 1;
+		min-width: 0;
+		border: 0;
+		background: transparent;
+		color: var(--ink);
+		font: inherit;
+		font-size: var(--t-ui);
+		outline: none;
+	}
+
+	.status {
+		margin-top: 0.75rem;
+		font-size: var(--t-small);
+		color: var(--quiet);
+	}
+
+	.year {
+		margin-top: 1.75rem;
+	}
+
+	.year:first-of-type {
+		margin-top: 1.25rem;
+	}
+
+	.year h2 {
+		display: flex;
+		align-items: baseline;
+		gap: 0.75rem;
+		margin-bottom: 0.75rem;
+		padding-bottom: 0.5rem;
+		border-bottom: 1px solid var(--rule);
+		font-size: 1.35rem;
+		font-weight: 800;
+		letter-spacing: -0.02em;
+	}
+
+	.year-count {
+		font-family: var(--font-sans);
+		font-size: var(--t-small);
+		font-weight: 600;
+		letter-spacing: 0;
+		color: var(--quiet);
+	}
+
+	.grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+		gap: 0.75rem;
+	}
+
+	[hidden] {
+		display: none !important;
+	}
+
+	.empty {
+		display: grid;
+		justify-items: start;
+		gap: 0.9rem;
+		margin-top: 1.5rem;
+		padding: 1.5rem;
+		border-radius: var(--radius-l);
+		background: var(--paper);
+		color: var(--body);
+	}
+
+	@media (max-width: 640px) {
+		.chips {
+			flex-wrap: nowrap;
+			overflow-x: auto;
+			margin-inline: calc(var(--gutter) * -1);
+			padding-inline: var(--gutter);
+			scrollbar-width: none;
+		}
+
+		.chip {
+			flex-shrink: 0;
+		}
+
+		.search {
+			width: 100%;
+		}
+	}
+</style>

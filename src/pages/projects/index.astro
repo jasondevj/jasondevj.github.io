@@ -1,0 +1,31 @@
+---
+import ProjectList from '../../components/ProjectList.astro';
+import Base from '../../layouts/Base.astro';
+import { getProjects } from '../../lib/projects';
+import { breadcrumbSchema } from '../../lib/schema';
+import { SITE } from '../../site.config';
+
+const projects = await getProjects();
+---
+
+<Base
+	title="Projects"
+	description={`Open-source projects by ${SITE.name}: a rule engine, JVM tooling, single sign-on for Vaadin, and a JetBrains plugin mirror.`}
+	jsonLd={[
+		breadcrumbSchema([
+			{ name: 'Home', path: '/' },
+			{ name: 'Projects', path: '/projects/' },
+		]),
+	]}
+>
+	<section class="shell page-head">
+		<h1>Projects</h1>
+		<p class="lede">
+			Libraries, tools and experiments, mostly on the JVM. Some solved a problem at work, some were a way to learn. Each
+			one links to its code on GitHub.
+		</p>
+	</section>
+	<div class="shell">
+		<ProjectList projects={projects} />
+	</div>
+</Base>

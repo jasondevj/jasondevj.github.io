@@ -1,0 +1,52 @@
+---
+import PostArchive from '../../components/PostArchive.astro';
+import Base from '../../layouts/Base.astro';
+import { buildStops, collectTags, getPosts, type Stop, tagSlug } from '../../lib/posts';
+import { breadcrumbSchema } from '../../lib/schema';
+import { SITE } from '../../site.config';
+
+export async function getStaticPaths() {
+	const network = buildStops(await getPosts());
+	return collectTags(network.map(({ post }) => post)).map(({ name, slug }) => ({
+		params: { tag: slug },
+		props: { name, stops: network.filter(({ post }) => post.data.tags.some((tag) => tagSlug(tag) === slug)) },
+	}));
+}
+
+interface Props {
+	name: string;
+	stops: Stop[];
+}
+
+const { name, stops } = Astro.props;
+const description = `Posts by ${SITE.name} tagged ${name}.`;
+---
+
+<Base
+	title={`Tagged ${name}`}
+	description={description}
+	noindex={stops.length < 2}
+	jsonLd={[
+		breadcrumbSchema([
+			{ name: 'Home', path: '/' },
+			{ name: 'Tags', path: '/tags/' },
+			{ name, path: `/tags/${Astro.params.tag}/` },
+		]),
+	]}
+>
+	<section class="shell page-head">
+		<p class="crumb"><a class="link" href="/tags/">All tags</a></p>
+		<h1>Tagged {name}</h1>
+		<p class="lede">{stops.length} {stops.length === 1 ? 'post' : 'posts'}.</p>
+	</section>
+	<div class="shell">
+		<PostArchive stops={stops} />
+	</div>
+</Base>
+
+<style>
+	.crumb {
+		margin-bottom: 1rem;
+		font-size: var(--t-ui);
+	}
+</style>

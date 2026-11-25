@@ -1,0 +1,68 @@
+---
+import PostArchive from '../../components/PostArchive.astro';
+import type { Line } from '../../data/lines';
+import Base from '../../layouts/Base.astro';
+import { activeLines, buildStops, getPosts, type Stop } from '../../lib/posts';
+import { breadcrumbSchema } from '../../lib/schema';
+import { SITE } from '../../site.config';
+
+export async function getStaticPaths() {
+	const network = buildStops(await getPosts());
+	return activeLines(network).map((line) => ({
+		params: { line: line.id },
+		props: { line, stops: network.filter(({ stations }) => stations.some((s) => s.line.id === line.id)) },
+	}));
+}
+
+interface Props {
+	line: Line;
+	stops: Stop[];
+}
+
+const { line, stops } = Astro.props;
+const description = `${SITE.name} on ${line.name.toLowerCase()}: ${line.summary}`;
+---
+
+<Base
+	title={`${line.name} line`}
+	description={description}
+	jsonLd={[
+		breadcrumbSchema([
+			{ name: 'Home', path: '/' },
+			{ name: 'Writing', path: '/blog/' },
+			{ name: line.name, path: `/lines/${line.id}/` },
+		]),
+	]}
+>
+	<section class={`shell page-head line-head line-${line.id}`}>
+		<p class="crumb"><a class="link" href="/blog/">Writing</a></p>
+		<h1><span class="line-badge">{line.code}</span> {line.name}</h1>
+		<p class="lede">{line.summary}</p>
+	</section>
+	<div class="shell">
+		<PostArchive stops={stops} />
+	</div>
+</Base>
+
+<style>
+	.line-head {
+		--band: var(--tint);
+	}
+
+	.crumb {
+		margin-bottom: 1rem;
+		font-size: var(--t-ui);
+	}
+
+	h1 .line-badge {
+		height: auto;
+		min-width: 0;
+		padding: 0.12em 0.34em 0.1em;
+		font-family: var(--font-display);
+		font-size: 0.6em;
+		font-weight: 800;
+		vertical-align: 0.2em;
+		background: var(--c);
+		color: var(--white);
+	}
+</style>

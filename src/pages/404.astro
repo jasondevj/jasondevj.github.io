@@ -1,0 +1,23 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Page not found" description="There is no page at this address." noindex>
+	<section class="shell page-head">
+		<h1>There's no page at this address</h1>
+		<p class="lede">The link may be mistyped, or the page may have moved. Everything I've published is in the archive.</p>
+		<div class="actions">
+			<a class="button" href="/blog/">Browse the archive</a>
+			<a class="button button-quiet" href="/">Go to the home page</a>
+		</div>
+	</section>
+</Base>
+
+<style>
+	.actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem;
+		margin-top: 2.5rem;
+	}
+</style>

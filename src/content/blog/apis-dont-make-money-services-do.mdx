@@ -1,0 +1,83 @@
+---
+title: "APIs Don't Make Money. Services Do."
+description: "Why charging per API call rarely pays off for a telco, and what going beyond APIs looks like: service revenue, a real developer ecosystem, and tools for non-developers."
+pubDate: 2016-01-19
+tags: [apis, telco, developer-experience, product-thinking]
+syndicate: false
+---
+
+import Compare from '../../components/post/Compare.astro';
+import TalkCard from '../../components/post/TalkCard.astro';
+import videoStill from '../../assets/talks/apis-dont-make-money.jpg';
+
+<TalkCard
+	title="APIs Don't Make Money"
+	kind="I recorded this as a webinar"
+	event="hSenid Mobile webinar"
+	date="January 2016"
+	cover={videoStill}
+	video={{
+		youtubeId: 'k7d_iCGZRns',
+		uploaded: '2016-01-19',
+		seconds: 548,
+		description:
+			'A hSenid Mobile webinar in which Jason Jebanesan and a product manager talk about why telcos rarely make money from opening up their APIs, and what going beyond APIs looks like.',
+	}}
+/>
+
+In early 2016, a product manager colleague and I sat down at the hSenid Mobile office to record a short webinar about API management platforms. I'd been hearing a lot about these platforms and how telcos were using them. Telcos were rushing to open up their APIs, but was that really enough to make them substantial money in the years to come? Very few were making any money from them yet. This is the written version of what we talked about.
+
+## Why telcos built API platforms
+
+API management platforms had been around for a few years by then, and most companies first used them to make things easier inside the business. You put an API tier in front of all your services, manage them from one place, and replace a service without breaking everything that depends on it.
+
+Then people noticed the revenue. Expose those APIs to the outside world and other businesses will build on them. Amazon was the example everyone reached for: it started out selling books and became a company whose APIs bring in billions. Plenty of others followed, and telcos tried to do the same. Only a few of them ever saw meaningful new revenue from it.
+
+## The arithmetic of charging per call
+
+The usual model is to count API calls and charge for each one. The trouble is the size of the numbers. You can only charge a couple of cents a call, so to make it a sustainable business you need millions of calls a month. For most operators that isn't practical.
+
+It's also hard on the people you most want building on your platform. The typical deal asks for payment up front, say for a bundle of 10,000 calls. For a startup that's a real investment, made before they know whether the idea works. If the business fails, that money is gone.
+
+## Customers pay for services, not calls
+
+My colleague put the problem simply: it's not APIs that bring in revenue, it's the services built on them. If I'm a developer or a startup, I build a service and deliver it to my customers. They pay me for that service. They don't care how many API calls it took.
+
+So charge for the service instead. Let developers start earning first, then take a share of what their service makes. A developer who's earning is happy to share, and may even be willing to pay a bit extra. The service is a much bigger pie than the API calls underneath it, so everyone's slice gets bigger.
+
+<Compare
+	before={{
+		title: 'Charge per API call',
+		body: 'A couple of cents a call, often sold as a bundle paid up front. It only adds up at millions of calls a month, and a startup pays before it knows whether its idea works.',
+		verdict: 'The platform sells plumbing',
+	}}
+	after={{
+		title: 'Share the service revenue',
+		body: 'Developers build services their customers pay for, and the platform takes a share of what those services earn. The platform makes money when its developers do.',
+		verdict: 'The platform shares in the outcome',
+	}}
+/>
+
+## APIs need a developer ecosystem
+
+The word API comes with an audience built in: developers. You can't have an API platform without them, which is why almost every platform ships SDKs, sample applications, simulators and guides. Those are the minimum.
+
+Going beyond APIs means building a proper developer ecosystem around them. Run developer sessions, tech talks and hackathons to keep developers engaged with your APIs. Find the passionate people and form a team of developer evangelists, whose job is to get developers involved and help them build applications on your APIs. It's the same argument I made [in 2011](/blog/harnessing-developer-communities-for-telco-apps/) about operators and developer communities.
+
+## Most ideas don't come from developers
+
+In any country or community, developers are a small group. And developers usually aren't the people who come up with the idea. They're the people who build the software that delivers it. Most innovation happens outside the developer community.
+
+Think of a small business or an enterprise with a good idea. The first question shouldn't be "who do we hire to build this?" It should be "how do we make money from this?" The same goes for startups. Most are founded by people with a business background rather than programmers, and the first hurdle for every new idea is finding a development team to bring it to life.
+
+So there has to be another layer on top of the API platform: a service creation environment where people who don't write code can build services from the APIs and take them to market, with the platform taking care of the technical side.
+
+## Going beyond APIs
+
+Put together, going beyond APIs takes three steps:
+
+1. An API management platform that exposes what you can offer.
+2. A way to create services on top of those APIs, and to earn from those services rather than from individual calls.
+3. A service creation layer where non-developers can turn their ideas into services, without technical knowledge standing in the way.
+
+> It's not APIs that bring you revenue. It's the services built on them.

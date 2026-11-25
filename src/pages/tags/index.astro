@@ -1,0 +1,58 @@
+---
+import Base from '../../layouts/Base.astro';
+import { collectTags, getPosts } from '../../lib/posts';
+import { SITE } from '../../site.config';
+
+const tags = collectTags(await getPosts());
+---
+
+<Base title="Tags" description={`Every tag ${SITE.name} has used, with the number of posts for each.`}>
+	<section class="shell page-head">
+		<h1>Tags</h1>
+		<p class="lede">Finer-grained than the lines. Every tag I've used, most used first.</p>
+	</section>
+	<div class="shell">
+		<ul class="tags">
+			{
+				tags.map(({ name, slug, count }) => (
+					<li>
+						<a href={`/tags/${slug}/`}>{name}</a>
+						<span>{count}</span>
+					</li>
+				))
+			}
+		</ul>
+	</div>
+</Base>
+
+<style>
+	.tags {
+		columns: 16rem;
+		column-gap: 2.5rem;
+	}
+
+	li {
+		display: flex;
+		justify-content: space-between;
+		gap: 1rem;
+		padding-block: 0.8rem;
+		border-bottom: 1px solid var(--rule);
+		break-inside: avoid;
+	}
+
+	a {
+		font-family: var(--font-display);
+		font-size: 1.35rem;
+		font-weight: 600;
+	}
+
+	a:hover {
+		text-decoration: underline;
+		text-decoration-thickness: 2px;
+		text-underline-offset: 0.16em;
+	}
+
+	span {
+		color: var(--quiet);
+	}
+</style>

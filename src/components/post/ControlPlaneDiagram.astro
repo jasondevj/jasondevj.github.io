@@ -1,0 +1,209 @@
+---
+const branch = [
+	{ y: 248, label: 'Retrieval pipeline' },
+	{ y: 276, label: 'Tools' },
+	{ y: 304, label: 'Policy engine' },
+	{ y: 332, label: 'Memory manager' },
+	{ y: 360, label: 'Observability' },
+];
+const tools = [
+	{ x: 490, label: 'GitHub' },
+	{ x: 545, label: 'Postgres' },
+	{ x: 600, label: 'Slack' },
+];
+---
+
+<figure class="diagram">
+	<svg viewBox="0 0 640 400" role="img" aria-labelledby="cp-title cp-desc">
+		<title id="cp-title">RAG pipeline before and after a control plane</title>
+		<desc id="cp-desc">
+			Before: the app goes straight to a vector database and then the LLM. After: the app goes through a RAG control
+			plane, where a RAG agent orchestrates a retrieval pipeline, tools, a policy engine, a memory manager and
+			observability, and reaches GitHub, Postgres and Slack over MCP, before calling the LLM.
+		</desc>
+
+		<text class="row-label" x="0" y="18">Before</text>
+		<path class="rail grey" d="M70 48 H570"></path>
+		<circle class="stop grey" cx="70" cy="48" r="9"></circle>
+		<circle class="stop grey" cx="320" cy="48" r="9"></circle>
+		<circle class="stop grey" cx="570" cy="48" r="9"></circle>
+		<text class="name" x="70" y="80" text-anchor="middle">App</text>
+		<text class="name" x="320" y="80" text-anchor="middle">Vector DB</text>
+		<text class="name" x="570" y="80" text-anchor="middle">LLM</text>
+
+		<text class="row-label" x="0" y="132">After</text>
+		<rect class="plane" x="180" y="150" width="280" height="236" rx="18"></rect>
+		<text class="plane-label" x="196" y="172">RAG control plane</text>
+
+		<path class="rail green" d="M70 200 H570"></path>
+		<path class="rail blue" d="M320 218 V360"></path>
+		<path class="rail coral" d="M320 276 H600"></path>
+
+		<circle class="stop green big" cx="70" cy="200" r="10"></circle>
+		<circle class="stop green big" cx="570" cy="200" r="10"></circle>
+		<text class="name" x="70" y="236" text-anchor="middle">App</text>
+		<text class="name" x="570" y="236" text-anchor="middle">LLM</text>
+
+		{
+			branch.map(({ y, label }) => (
+				<>
+					<circle class="stop blue" cx="320" cy={y} r="7" />
+					<text class="name small" x="304" y={y + 4} text-anchor="end">
+						{label}
+					</text>
+				</>
+			))
+		}
+
+		<rect class="mcp" x="372" y="264" width="46" height="24" rx="12"></rect>
+		<text class="mcp-label" x="395" y="280.5" text-anchor="middle">MCP</text>
+
+		{
+			tools.map(({ x, label }) => (
+				<>
+					<circle class="stop coral" cx={x} cy="276" r="7" />
+					<text class="name small" x={x} y="302" text-anchor="middle">
+						{label}
+					</text>
+				</>
+			))
+		}
+
+		<rect class="agent" x="260" y="182" width="120" height="36" rx="18"></rect>
+		<text class="agent-label" x="320" y="205" text-anchor="middle">RAG agent</text>
+	</svg>
+	<figcaption>
+		Same boxes, same arrows. The work moves into the agent in the middle, which reaches tools over MCP and runs inside a
+		control plane that keeps it observable.
+	</figcaption>
+</figure>
+
+<style>
+	.diagram {
+		margin: 0;
+		padding: 1.25rem 1.25rem 1rem;
+		border-radius: var(--radius-l);
+		background: var(--white);
+		box-shadow: inset 0 0 0 1px var(--rule);
+	}
+
+	svg {
+		width: 100%;
+		height: auto;
+		font-family: var(--font-sans);
+	}
+
+	.row-label {
+		font-family: var(--font-display);
+		font-size: 15px;
+		font-weight: 750;
+		fill: var(--quiet);
+	}
+
+	.rail {
+		fill: none;
+		stroke-linecap: round;
+	}
+
+	.rail.grey {
+		stroke: var(--rule-strong);
+		stroke-width: 8;
+	}
+
+	.rail.green {
+		stroke: var(--line-ae);
+		stroke-width: 10;
+	}
+
+	.rail.blue {
+		stroke: var(--line-sa);
+		stroke-width: 8;
+	}
+
+	.rail.coral {
+		stroke: var(--line-hs);
+		stroke-width: 6;
+	}
+
+	.stop {
+		fill: var(--white);
+		stroke-width: 4;
+	}
+
+	.stop.big {
+		stroke-width: 5;
+	}
+
+	.stop.grey {
+		stroke: #9aa3b2;
+	}
+
+	.stop.green {
+		stroke: var(--line-ae);
+	}
+
+	.stop.blue {
+		stroke: var(--line-sa);
+		stroke-width: 3.5;
+	}
+
+	.stop.coral {
+		stroke: var(--line-hs);
+		stroke-width: 3.5;
+	}
+
+	.name {
+		font-size: 14px;
+		font-weight: 600;
+		fill: var(--ink);
+	}
+
+	.name.small {
+		font-size: 12.5px;
+	}
+
+	.plane {
+		fill: #f1f5ff;
+		stroke: var(--line-sa);
+		stroke-width: 1.5;
+		stroke-dasharray: 6 5;
+	}
+
+	.plane-label {
+		font-size: 12.5px;
+		font-weight: 700;
+		fill: #1f4fd1;
+	}
+
+	.agent {
+		fill: var(--white);
+		stroke: var(--ink);
+		stroke-width: 3.5;
+	}
+
+	.agent-label {
+		font-size: 13px;
+		font-weight: 700;
+		fill: var(--ink);
+	}
+
+	.mcp {
+		fill: #ffe8ec;
+		stroke: var(--line-hs);
+		stroke-width: 1.5;
+	}
+
+	.mcp-label {
+		font-size: 12px;
+		font-weight: 800;
+		fill: #c81e45;
+	}
+
+	figcaption {
+		margin-top: 0.75rem;
+		font-family: var(--font-sans);
+		font-size: var(--t-small);
+		line-height: 1.5;
+		color: var(--quiet);
+	}
+</style>

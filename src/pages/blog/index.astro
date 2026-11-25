@@ -1,0 +1,41 @@
+---
+import PostArchive from '../../components/PostArchive.astro';
+import Base from '../../layouts/Base.astro';
+import { activeLines, buildStops, getPosts } from '../../lib/posts';
+import { breadcrumbSchema } from '../../lib/schema';
+import { SITE } from '../../site.config';
+
+const network = buildStops(await getPosts());
+const lines = activeLines(network);
+const description = `Everything ${SITE.name} has written about AI engineering, systems and the people who build software, newest first.`;
+---
+
+<Base
+	title="Writing"
+	description={description}
+	jsonLd={[
+		{
+			'@context': 'https://schema.org',
+			'@type': 'Blog',
+			name: `${SITE.name}: writing`,
+			url: new URL('/blog/', SITE.url).toString(),
+			description,
+			author: { '@type': 'Person', name: SITE.name, url: SITE.url },
+		},
+		breadcrumbSchema([
+			{ name: 'Home', path: '/' },
+			{ name: 'Writing', path: '/blog/' },
+		]),
+	]}
+>
+	<section class="shell page-head">
+		<h1>Writing</h1>
+		<p class="lede">
+			{`${network.length} ${network.length === 1 ? 'piece' : 'pieces'}`} on AI engineering, systems and the people who build
+			software, newest first. Pick a topic or search to narrow it down.
+		</p>
+	</section>
+	<div class="shell">
+		<PostArchive stops={network} lines={lines} filters />
+	</div>
+</Base>

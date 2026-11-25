@@ -1,0 +1,250 @@
+.prose {
+	font-size: var(--t-read);
+	line-height: 1.72;
+	color: #2a2f3d;
+}
+
+.prose > * + * {
+	margin-top: 1.3em;
+}
+
+.prose > :is(p, ul, ol, dl, h2, h3, h4):not([class], :has(> img)) {
+	max-width: 46rem;
+}
+
+@media (min-width: 1080px) {
+	.prose {
+		font-size: 1.25rem;
+	}
+}
+
+.prose h2,
+.prose h3,
+.prose h4 {
+	position: relative;
+	color: var(--ink);
+	scroll-margin-top: 6.5rem;
+}
+
+.prose h2 {
+	margin-top: 2.1em;
+	font-size: 1.75em;
+	font-weight: 750;
+	letter-spacing: -0.025em;
+	line-height: 1.12;
+}
+
+.prose h3 {
+	margin-top: 1.8em;
+	font-size: 1.3em;
+	letter-spacing: -0.02em;
+	line-height: 1.2;
+}
+
+.prose h4 {
+	margin-top: 1.6em;
+	font-family: var(--font-sans);
+	font-size: 1em;
+	letter-spacing: 0;
+}
+
+.prose :is(h2, h3, h4) + * {
+	margin-top: 0.6em;
+}
+
+.prose .heading-anchor {
+	position: absolute;
+	right: 100%;
+	padding-right: 0.35em;
+	color: var(--rule-strong);
+	font-weight: 600;
+	opacity: 0;
+	transition: opacity 0.2s var(--ease);
+}
+
+.prose :is(h2, h3, h4):hover .heading-anchor,
+.prose .heading-anchor:focus-visible {
+	opacity: 1;
+}
+
+.prose .heading-anchor:hover {
+	color: var(--c, var(--link));
+}
+
+.prose strong {
+	color: var(--ink);
+	font-weight: 700;
+}
+
+.prose a {
+	color: var(--ink);
+	text-decoration: underline;
+	text-decoration-color: var(--c, var(--link));
+	text-decoration-thickness: 2px;
+	text-underline-offset: 0.22em;
+}
+
+.prose a:hover {
+	color: var(--cink, var(--link));
+}
+
+.prose ul,
+.prose ol {
+	padding-left: 1.3em;
+}
+
+.prose ul {
+	list-style: disc;
+}
+
+.prose ol {
+	list-style: decimal;
+}
+
+.prose li + li {
+	margin-top: 0.4em;
+}
+
+.prose li::marker {
+	color: var(--c, var(--quiet));
+	font-weight: 700;
+}
+
+.prose blockquote {
+	margin-inline: 0;
+	padding: 1.1em 1.4em;
+	border-radius: var(--radius-m);
+	background: var(--tint, var(--paper));
+	color: var(--ink);
+	font-family: var(--font-display);
+	font-size: 1.2em;
+	font-weight: 600;
+	line-height: 1.45;
+	letter-spacing: -0.015em;
+}
+
+.prose blockquote p + p {
+	margin-top: 0.7em;
+}
+
+.prose hr {
+	margin-block: 2.75em;
+	border: 0;
+	border-top: 1px solid var(--rule-strong);
+}
+
+.prose :not(pre) > code {
+	padding: 0.12em 0.4em;
+	border-radius: 6px;
+	background: var(--paper);
+	box-shadow: inset 0 0 0 1px var(--rule);
+	color: var(--ink);
+	font-family: var(--font-mono);
+	font-size: 0.82em;
+	overflow-wrap: break-word;
+}
+
+.prose pre.astro-code {
+	padding: 1.2rem 1.35rem;
+	border-radius: var(--radius-m);
+	background-color: var(--paper) !important;
+	box-shadow: inset 0 0 0 1px var(--rule);
+	font-family: var(--font-mono);
+	font-size: 0.84rem;
+	line-height: 1.7;
+	overflow-x: auto;
+	tab-size: 2;
+}
+
+.prose pre.astro-code code {
+	font-family: inherit;
+}
+
+.code-block {
+	position: relative;
+}
+
+.code-block .code-copy {
+	position: absolute;
+	top: 0.55rem;
+	right: 0.55rem;
+	display: grid;
+	place-items: center;
+	width: 2.1rem;
+	height: 2.1rem;
+	border: 0;
+	border-radius: 999px;
+	background: var(--white);
+	box-shadow: inset 0 0 0 1px var(--rule-strong);
+	color: var(--quiet);
+	cursor: pointer;
+}
+
+.code-block .code-copy:hover {
+	color: var(--ink);
+	box-shadow: inset 0 0 0 1.5px var(--ink);
+}
+
+.code-block .code-copy svg {
+	width: 0.95rem;
+	height: 0.95rem;
+}
+
+.prose img {
+	margin-inline: auto;
+	border-radius: var(--radius-m);
+}
+
+.prose figure {
+	margin-inline: 0;
+}
+
+.prose figcaption {
+	margin-top: 0.7em;
+	font-size: var(--t-ui);
+	color: var(--quiet);
+}
+
+.prose table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: var(--t-base);
+	font-variant-numeric: tabular-nums;
+}
+
+.prose th,
+.prose td {
+	padding: 0.6em 0.75em;
+	border-bottom: 1px solid var(--rule);
+	text-align: left;
+	vertical-align: top;
+}
+
+.prose th {
+	color: var(--ink);
+	font-weight: 700;
+	border-bottom: 2px solid var(--rule-strong);
+}
+
+.prose kbd {
+	padding: 0.1em 0.45em;
+	border-radius: 6px;
+	box-shadow: inset 0 -2px 0 var(--rule-strong), inset 0 0 0 1px var(--rule-strong);
+	font-family: var(--font-mono);
+	font-size: 0.8em;
+}
+
+@media (max-width: 720px) {
+	.prose {
+		font-size: 1.125rem;
+	}
+
+	.prose pre.astro-code {
+		margin-inline: calc(var(--gutter) * -1);
+		border-radius: 0;
+	}
+
+	.prose .heading-anchor {
+		display: none;
+	}
+}

